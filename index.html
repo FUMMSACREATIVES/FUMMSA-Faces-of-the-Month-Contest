@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FUMMSA Face of the Week</title>
+<style>
+  body { font-family: 'Segoe UI', sans-serif; background-color: #f4f4f9; padding: 20px; }
+  .container { max-width: 500px; margin: auto; }
+  form, .list-section { background: #fff; padding: 20px; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+  input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #ddd; box-sizing: border-box; }
+  button { background: #3498db; color: #fff; border: none; cursor: pointer; font-weight: bold; }
+  .hidden { display: none; }
+  .pts { float: right; font-weight: bold; color: #e67e22; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>FUMMSA Face of the Week</h1>
+
+    <div style="text-align: center; margin-bottom: 10px;">
+      Slots Remaining: <span id="slotsLeft" style="font-weight:bold;">20</span> / 20
+    </div>
+    
+    <div id="regSection">
+      <form id="registrationForm">
+        <h3>1. Register as a Contestant</h3>
+        <input type="text" id="regName" placeholder="Full Name" required>
+        <input type="text" id="regUsername" placeholder="TikTok Username" required>
+        <button type="submit">Join Contest</button>
+      </form>
+    </div>
+
+    <div id="refSection" class="hidden">
+      <form id="referralForm">
+        <h3 id="refTitle">Submit Support</h3>
+        <div id="contestantControls" class="hidden">
+           <button type="button" id="shareBtn" style="background:#27ae60;">Copy My Referral Link 🔗</button>
+           <hr>
+        </div>
+        <div id="votingInputs">
+          <p id="refInstructions">Enter YOUR TikTok handle and upload proof to support this contestant:</p>
+          <input type="text" id="friendHandle" placeholder="YOUR TikTok Username" required>
+          <input type="file" id="screenshot" required>
+          <button type="submit">Submit My Vote</button>
+        </div>
+        <button type="button" onclick="logout()" style="background:#95a5a6; margin-top:5px;">Logout / Back to Home</button>
+      </form>
+    </div>
+
+    <div class="list-section">
+      <h3>🏆 Leaderboard</h3>
+      <ul id="leaderboard" style="list-style: none; padding: 0;"></ul>
+    </div>
+
+    <div class="list-section" style="border-top: 2px solid #e74c3c; margin-top: 50px;">
+      <h3>🔍 Admin: Vote Verification</h3>
+      <button onclick="viewVotes()" style="background:#2c3e50;">View Voter List</button>
+      <button id="csvBtn" class="hidden" onclick="downloadCSV()" style="background:#27ae60; margin-top:10px;">Download Excel (CSV) 📊</button>
+      <ul id="adminVoteList" style="font-size: 0.8em; text-align: left; margin-top: 10px; padding-left: 20px;"></ul>
+    </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getDatabase, ref, set, update, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+  const firebaseConfig = {
+    databaseURL: "https://fummsa-face-of-the-week-default-rtdb.europe-west1.firebasedatabase.app/"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const clean = (str) => str.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+
+  let currentCount = 0;
+  let referrerUid = ""; 
+  let allVotesData = null;
+
+  // --- INITIAL LOAD ---
+  window.onload = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    referrerUid = clean(urlParams.get('ref') || "");
+    const savedUser = sessionStorage.getItem("fow_user");
+    if (savedUser) showDashboard(savedUser, true);
+    else if (referrerUid) showDashboard(referrerUid, false);
+  };
+
+  function showDashboard(id, isOwner) {
+    document.getElementById('regSection').classList.add('hidden');
+    document.getElementById('refSection').classList.remove('hidden');
+    if (isOwner) {
+      document.getElementById('refTitle').innerText = "Dashboard: " + id;
+      document.getElementById('contestantControls').classList.remove('hidden');
+      document.getElementById('votingInputs').classList.add('hidden'); 
+    } else {
+      document.getElementById('refTitle').innerText = "Supporting: " + id;
+      document.getElementById('contestantControls').classList.add('hidden');
+      document.getElementById('votingInputs').classList.remove('hidden');
+    }
+  }
+
+  // --- SYNC DATA ---
+  onValue(ref(db, '/'), (snap) => {
+    const root = snap.val() || {};
+    const participants = root.participants || {};
+    allVotesData = root.usedHandles || {}; // Store for CSV
+
+    document.getElementById('slotsLeft').innerText = Math.max(0, 20 - Object.keys(participants).length);
+    
+    const list = document.getElementById('leaderboard');
+    list.innerHTML = "";
+    Object.values(participants).sort((a,b) => b.points - a.points).forEach((p, i) => {
+      list.innerHTML += `<li>#${i+1} ${p.name} <span class="pts">${p.points} Pts</span></li>`;
+    });
+  });
+
+  // --- ACTIONS ---
+  document.getElementById('registrationForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('regName').value.trim();
+    const username = clean(document.getElementById('regUsername').value);
+    await set(ref(db, 'participants/' + username), { name: name, points: 0 });
+    sessionStorage.setItem("fow_user", username);
+    location.reload(); 
+  });
+
+  document.getElementById('referralForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const friend = clean(document.getElementById('friendHandle').value);
+    if (!referrerUid || referrerUid === sessionStorage.getItem("fow_user")) return alert("Self-voting disabled!");
+
+    const usedSnap = await get(ref(db, 'usedHandles/' + friend));
+    if (usedSnap.exists()) return alert("Already voted!");
+
+    const contestantSnap = await get(ref(db, 'participants/' + referrerUid));
+    if (!contestantSnap.exists()) return alert("Contestant not found.");
+
+    await update(ref(db, 'participants/' + referrerUid), { points: (contestantSnap.val().points || 0) + 1 });
+    await set(ref(db, 'usedHandles/' + friend), { votedFor: referrerUid, time: new Date().toLocaleString() });
+    alert("Point awarded!");
+    e.target.reset();
+  });
+
+  // --- ADMIN FUNCTIONS ---
+  window.viewVotes = () => {
+    const pass = prompt("Admin Password:");
+    if (pass === "FUMMSA2026") {
+        const list = document.getElementById('adminVoteList');
+        list.innerHTML = "";
+        document.getElementById('csvBtn').classList.remove('hidden');
+        for (let friend in allVotesData) {
+            list.innerHTML += `<li><b>@${friend}</b> voted for <b>${allVotesData[friend].votedFor}</b></li>`;
+        }
+    } else alert("Wrong Password!");
+  };
+
+  window.downloadCSV = () => {
+    let csvContent = "data:text/csv;charset=utf-8,Voter Handle,Voted For,Time\n";
+    for (let friend in allVotesData) {
+        csvContent += `${friend},${allVotesData[friend].votedFor},${allVotesData[friend].time}\n`;
+    }
+    const link = document.createElement("a");
+    link.setAttribute("href", encodeURI(csvContent));
+    link.setAttribute("download", "FUMMSA_Final_Votes.csv");
+    document.body.appendChild(link);
+    link.click();
+  };
+
+  document.getElementById('shareBtn').onclick = () => {
+    navigator.clipboard.writeText(window.location.origin + window.location.pathname + "?ref=" + sessionStorage.getItem("fow_user")).then(() => alert("Copied!"));
+  };
+
+  window.logout = () => {
+    sessionStorage.removeItem("fow_user");
+    window.location.href = window.location.origin + window.location.pathname;
+  };
+</script>
+</body>
+</html>
