@@ -3,23 +3,84 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FUMMSA Face of the Week</title>
+<title>FUMMSA Faces of the Month</title>
 <style>
-  body { font-family: 'Segoe UI', sans-serif; background-color: #f4f4f9; padding: 20px; }
-  .container { max-width: 500px; margin: auto; }
-  form, .list-section { background: #fff; padding: 20px; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+  body { 
+    font-family: 'Segoe UI', sans-serif; 
+    /* Purple and White Animated Gradient */
+    background: linear-gradient(-45deg, #4b0082, #ffffff, #8e44ad, #ffffff);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+    padding: 20px; 
+    margin: 0;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  @keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: url('Contest.jpg');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 85%; 
+    opacity: 0.12; 
+    z-index: -1; 
+  }
+
+  .container { max-width: 500px; margin: auto; position: relative; z-index: 1; }
+  
+  /* Style for the new second logo */
+  .top-logo {
+    display: block;
+    margin: 0 auto 10px auto;
+    max-width: 120px; /* Adjust size as needed */
+    height: auto;
+  }
+
+  form, .list-section { 
+    background: rgba(255, 255, 255, 0.9); 
+    backdrop-filter: blur(5px);
+    padding: 20px; 
+    margin-bottom: 20px; 
+    border-radius: 12px; 
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1); 
+  }
+
   input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #ddd; box-sizing: border-box; }
-  button { background: #3498db; color: #fff; border: none; cursor: pointer; font-weight: bold; }
+  button { 
+    background: #6c3483; 
+    color: #fff; 
+    border: none; 
+    cursor: pointer; 
+    font-weight: bold; 
+    transition: transform 0.2s ease;
+  }
+  button:active { transform: scale(0.98); }
+
   .hidden { display: none; }
-  .pts { float: right; font-weight: bold; color: #e67e22; }
+  .pts { float: right; font-weight: bold; color: #8e44ad; }
+  
+  /* CHANGED: Title color set to White */
+  h1 { text-align: center; color: #ffffff; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
 </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>FUMMSA Face of the Week</h1>
+    <img src="Logo.jpg" alt="Logo" class="top-logo">
+    
+    <h1>FUMMSA Faces of the Month</h1>
 
-    <div style="text-align: center; margin-bottom: 10px;">
+    <div style="text-align: center; margin-bottom: 10px; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">
       Slots Remaining: <span id="slotsLeft" style="font-weight:bold;">20</span> / 20
     </div>
     
@@ -28,7 +89,8 @@
         <h3>1. Register as a Contestant</h3>
         <input type="text" id="regName" placeholder="Full Name" required>
         <input type="text" id="regUsername" placeholder="TikTok Username" required>
-        <button type="submit">Join Contest</button>
+        <input type="text" id="regIG" placeholder="Instagram Username" required>
+        <button type="submit" id="regBtn">Join Contest</button>
       </form>
     </div>
 
@@ -40,8 +102,9 @@
            <hr>
         </div>
         <div id="votingInputs">
-          <p id="refInstructions">Enter YOUR TikTok handle and upload proof to support this contestant:</p>
+          <p id="refInstructions">Enter handles and upload proof to support:</p>
           <input type="text" id="friendHandle" placeholder="YOUR TikTok Username" required>
+          <input type="text" id="friendIG" placeholder="YOUR Instagram Username" required>
           <input type="file" id="screenshot" required>
           <button type="submit">Submit My Vote</button>
         </div>
@@ -72,13 +135,16 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
-  const clean = (str) => str.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
 
-  let currentCount = 0;
+  const clean = (str) => {
+    if (!str) return "";
+    return str.trim().toLowerCase().replace(/[\.#\$\/\[\]]/g, "_");
+  };
+
   let referrerUid = ""; 
   let allVotesData = null;
+  let totalParticipants = 0;
 
-  // --- INITIAL LOAD ---
   window.onload = () => {
     const urlParams = new URLSearchParams(window.location.search);
     referrerUid = clean(urlParams.get('ref') || "");
@@ -101,28 +167,42 @@
     }
   }
 
-  // --- SYNC DATA ---
   onValue(ref(db, '/'), (snap) => {
     const root = snap.val() || {};
     const participants = root.participants || {};
-    allVotesData = root.usedHandles || {}; // Store for CSV
+    allVotesData = root.usedHandles || {}; 
 
-    document.getElementById('slotsLeft').innerText = Math.max(0, 20 - Object.keys(participants).length);
+    totalParticipants = Object.keys(participants).length;
+    const remaining = Math.max(0, 20 - totalParticipants);
+    document.getElementById('slotsLeft').innerText = remaining;
+
+    if (remaining <= 0) {
+      document.getElementById('regSection').innerHTML = "<p style='text-align:center; font-weight:bold; color:red;'>Registration Closed (Slots Full)</p>";
+    }
     
     const list = document.getElementById('leaderboard');
     list.innerHTML = "";
     Object.values(participants).sort((a,b) => b.points - a.points).forEach((p, i) => {
-      list.innerHTML += `<li>#${i+1} ${p.name} <span class="pts">${p.points} Pts</span></li>`;
+      list.innerHTML += `<li style="margin-bottom:8px;">#${i+1} ${p.name} <span class="pts">${p.points} Pts</span></li>`;
     });
   });
 
-  // --- ACTIONS ---
   document.getElementById('registrationForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (totalParticipants >= 20) return alert("Sorry, slots are full!");
+
     const name = document.getElementById('regName').value.trim();
-    const username = clean(document.getElementById('regUsername').value);
-    await set(ref(db, 'participants/' + username), { name: name, points: 0 });
-    sessionStorage.setItem("fow_user", username);
+    const tiktok = document.getElementById('regUsername').value.trim();
+    const ig = document.getElementById('regIG').value.trim();
+    const userId = clean(tiktok);
+
+    await set(ref(db, 'participants/' + userId), { 
+      name: name, 
+      tiktok: tiktok, 
+      ig: ig, 
+      points: 0 
+    });
+    sessionStorage.setItem("fow_user", userId);
     location.reload(); 
   });
 
@@ -143,7 +223,6 @@
     e.target.reset();
   });
 
-  // --- ADMIN FUNCTIONS ---
   window.viewVotes = () => {
     const pass = prompt("Admin Password:");
     if (pass === "FUMMSA2026") {
@@ -169,7 +248,8 @@
   };
 
   document.getElementById('shareBtn').onclick = () => {
-    navigator.clipboard.writeText(window.location.origin + window.location.pathname + "?ref=" + sessionStorage.getItem("fow_user")).then(() => alert("Copied!"));
+    const link = window.location.origin + window.location.pathname + "?ref=" + sessionStorage.getItem("fow_user");
+    navigator.clipboard.writeText(link).then(() => alert("Copied!"));
   };
 
   window.logout = () => {
