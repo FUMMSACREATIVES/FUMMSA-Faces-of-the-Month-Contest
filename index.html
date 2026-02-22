@@ -10,60 +10,16 @@
     background: linear-gradient(-45deg, #4b0082, #ffffff, #8e44ad, #ffffff);
     background-size: 400% 400%;
     animation: gradientBG 15s ease infinite;
-    padding: 20px; 
-    margin: 0;
-    min-height: 100vh;
-    position: relative;
-    overflow-x: hidden;
+    padding: 20px; margin: 0; min-height: 100vh; position: relative; overflow-x: hidden;
   }
-
-  @keyframes gradientBG {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
-
-  body::before {
-    content: "";
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-image: url('Contest.jpg');
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 85%; 
-    opacity: 0.12; 
-    z-index: -1; 
-  }
-
+  @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+  body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-image: url('Contest.jpg'); background-repeat: no-repeat; background-position: center; background-size: 85%; opacity: 0.12; z-index: -1; }
   .container { max-width: 500px; margin: auto; position: relative; z-index: 1; }
-  
-  .top-logo {
-    display: block;
-    margin: 0 auto 10px auto;
-    max-width: 120px; 
-    height: auto;
-  }
-
-  form, .list-section { 
-    background: rgba(255, 255, 255, 0.9); 
-    backdrop-filter: blur(5px);
-    padding: 20px; 
-    margin-bottom: 20px; 
-    border-radius: 12px; 
-    box-shadow: 0 8px 32px rgba(0,0,0,0.1); 
-  }
-
+  .top-logo { display: block; margin: 0 auto 10px auto; max-width: 120px; height: auto; }
+  form, .list-section { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(5px); padding: 20px; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
   input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #ddd; box-sizing: border-box; }
-  button { 
-    background: #6c3483; 
-    color: #fff; 
-    border: none; 
-    cursor: pointer; 
-    font-weight: bold; 
-    transition: transform 0.2s ease;
-  }
+  button { background: #6c3483; color: #fff; border: none; cursor: pointer; font-weight: bold; transition: transform 0.2s ease; }
   button:active { transform: scale(0.98); }
-
   .hidden { display: none; }
   .pts { float: right; font-weight: bold; color: #8e44ad; }
   h1 { text-align: center; color: #ffffff; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
@@ -73,20 +29,18 @@
 
 <div class="container">
     <img src="Logo.jpg" alt="Logo" class="top-logo">
-    
     <h1>FUMMSA Faces of the Month</h1>
-
-    <div style="text-align: center; margin-bottom: 10px; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">
-      Slots Remaining: <span id="slotsLeft" style="font-weight:bold;">20</span> / 20
+    <div style="text-align: center; margin-bottom: 10px; color: white;">
+      Slots Remaining: <span id="slotsLeft">20</span> / 20
     </div>
     
     <div id="regSection">
       <form id="registrationForm">
         <h3>1. Register as a Contestant</h3>
-        <input type="text" id="regName" placeholder="Full Name" required>
+        <input type="text" id="regName" placeholder="Your FULL NAME (e.g. John Doe)" required>
         <input type="text" id="regUsername" placeholder="TikTok Username" required>
         <input type="text" id="regIG" placeholder="Instagram Username" required>
-        <button type="submit" id="regBtn">Join Contest</button>
+        <button type="submit">Join Contest</button>
       </form>
     </div>
 
@@ -98,12 +52,11 @@
            <hr>
         </div>
         <div id="votingInputs">
-          <p id="refInstructions">Enter your handle and upload proof:</p>
-          <input type="text" id="friendHandle" placeholder="TikTok Username (Optional)">
-          <input type="text" id="friendIG" placeholder="Instagram Username (Optional)">
+          <p id="refInstructions">Enter handles and upload proof to support:</p>
+          <input type="text" id="friendHandle" placeholder="YOUR TikTok Username (Optional)">
+          <input type="text" id="friendIG" placeholder="YOUR Instagram Username (Optional)">
           <input type="file" id="screenshot" accept="image/*" required>
-          <div id="uploadStatus" style="font-size: 0.8em; color: #8e44ad; text-align: center; margin: 5px 0;"></div>
-          <button type="submit" id="voteSubmitBtn">Submit My Vote</button>
+          <button type="submit" id="voteBtn">Submit My Vote</button>
         </div>
         <button type="button" onclick="logout()" style="background:#95a5a6; margin-top:5px;">Logout / Back to Home</button>
       </form>
@@ -117,8 +70,8 @@
     <div class="list-section" style="border-top: 2px solid #e74c3c; margin-top: 50px;">
       <h3>🔍 Admin: Vote Verification</h3>
       <button onclick="viewVotes()" style="background:#2c3e50;">View Voter List</button>
-      <button id="csvBtn" class="hidden" onclick="downloadCSV()" style="background:#27ae60; margin-top:10px;">Download Excel (CSV) 📊</button>
-      <ul id="adminVoteList" style="font-size: 0.8em; text-align: left; margin-top: 10px; padding-left: 0;"></ul>
+      <button id="csvBtn" class="hidden" onclick="downloadCSV()" style="background:#27ae60; margin-top:10px;">Download CSV 📊</button>
+      <ul id="adminVoteList" style="font-size: 0.8em; text-align: left; margin-top: 10px; padding: 0;"></ul>
     </div>
 </div>
 
@@ -126,25 +79,20 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
   import { getDatabase, ref, set, update, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-  const firebaseConfig = {
-    databaseURL: "https://fummsa-face-of-the-week-default-rtdb.europe-west1.firebasedatabase.app/"
-  };
-
+  const firebaseConfig = { databaseURL: "https://fummsa-face-of-the-week-default-rtdb.europe-west1.firebasedatabase.app/" };
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
-  const clean = (str) => {
-    if (!str) return "";
-    return str.trim().toLowerCase().replace(/[\.#\$\/\[\]]/g, "_");
-  };
+  // FIXED: Aggressive clean function to remove emojis and special characters
+  const clean = (str) => str ? str.trim().toLowerCase().replace(/[^\w]/gi, '') : "";
 
   let referrerUid = ""; 
-  let allVotesData = null;
   let totalParticipants = 0;
+  let allVotesData = {};
 
   window.onload = () => {
     const urlParams = new URLSearchParams(window.location.search);
-    referrerUid = clean(urlParams.get('ref') || "");
+    referrerUid = clean(urlParams.get('ref') || ""); 
     const savedUser = sessionStorage.getItem("fow_user");
     if (savedUser) showDashboard(savedUser, true);
     else if (referrerUid) showDashboard(referrerUid, false);
@@ -154,11 +102,11 @@
     document.getElementById('regSection').classList.add('hidden');
     document.getElementById('refSection').classList.remove('hidden');
     if (isOwner) {
-      document.getElementById('refTitle').innerText = "Dashboard: " + id;
+      document.getElementById('refTitle').innerText = "Dashboard: " + id.toUpperCase();
       document.getElementById('contestantControls').classList.remove('hidden');
       document.getElementById('votingInputs').classList.add('hidden'); 
     } else {
-      document.getElementById('refTitle').innerText = "Supporting: " + id;
+      document.getElementById('refTitle').innerText = "Supporting: " + id.toUpperCase();
       document.getElementById('contestantControls').classList.add('hidden');
       document.getElementById('votingInputs').classList.remove('hidden');
     }
@@ -167,16 +115,10 @@
   onValue(ref(db, '/'), (snap) => {
     const root = snap.val() || {};
     const participants = root.participants || {};
-    allVotesData = root.usedHandles || {}; 
-
+    allVotesData = root.usedHandles || {};
     totalParticipants = Object.keys(participants).length;
-    const remaining = Math.max(0, 20 - totalParticipants);
-    document.getElementById('slotsLeft').innerText = remaining;
+    document.getElementById('slotsLeft').innerText = Math.max(0, 20 - totalParticipants);
 
-    if (remaining <= 0) {
-      document.getElementById('regSection').innerHTML = "<p style='text-align:center; font-weight:bold; color:red;'>Registration Closed (Slots Full)</p>";
-    }
-    
     const list = document.getElementById('leaderboard');
     list.innerHTML = "";
     Object.values(participants).sort((a,b) => b.points - a.points).forEach((p, i) => {
@@ -186,18 +128,12 @@
 
   document.getElementById('registrationForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (totalParticipants >= 20) return alert("Sorry, slots are full!");
-
+    if (totalParticipants >= 20) return alert("Slots full!");
     const name = document.getElementById('regName').value.trim();
-    const tiktok = document.getElementById('regUsername').value.trim();
-    const ig = document.getElementById('regIG').value.trim();
-    const userId = clean(tiktok);
+    const userId = clean(name); 
 
     await set(ref(db, 'participants/' + userId), { 
-      name: name, 
-      tiktok: tiktok, 
-      ig: ig, 
-      points: 0 
+      name: name, tiktok: document.getElementById('regUsername').value, ig: document.getElementById('regIG').value, points: 0 
     });
     sessionStorage.setItem("fow_user", userId);
     location.reload(); 
@@ -208,47 +144,43 @@
     const tk = document.getElementById('friendHandle').value.trim();
     const ig = document.getElementById('friendIG').value.trim();
     const file = document.getElementById('screenshot').files[0];
-    const btn = document.getElementById('voteSubmitBtn');
-    const status = document.getElementById('uploadStatus');
+    const btn = document.getElementById('voteBtn');
 
-    if (!tk && !ig) return alert("Enter at least one handle!");
+    // Voter must provide at least one handle
+    if (!tk && !ig) return alert("Please provide at least one handle!");
     if (!file) return alert("Upload proof!");
-    if (!referrerUid || referrerUid === sessionStorage.getItem("fow_user")) return alert("Self-voting disabled!");
+    if (!referrerUid || referrerUid === sessionStorage.getItem("fow_user")) return alert("Invalid link or self-voting!");
 
     const voterId = clean(tk || ig);
 
     try {
         btn.disabled = true;
-        status.innerText = "Processing vote...";
+        btn.innerText = "Processing...";
 
         const usedSnap = await get(ref(db, 'usedHandles/' + voterId));
-        if (usedSnap.exists()) throw new Error("This handle already voted!");
+        if (usedSnap.exists()) throw new Error("This handle has already voted!");
 
-        const contestantSnap = await get(ref(db, 'participants/' + referrerUid));
-        if (!contestantSnap.exists()) throw new Error("Contestant not found.");
+        const contestantRef = ref(db, 'participants/' + referrerUid);
+        const contestantSnap = await get(contestantRef);
+        if (!contestantSnap.exists()) throw new Error("Contestant not found! Ensure the link name matches the registered name.");
 
+        // FIXED: Using Base64 to save images without needing Firebase Storage
         const reader = new FileReader();
         reader.readAsDataURL(file);
         reader.onload = async () => {
-            const base64Image = reader.result;
-
-            await update(ref(db, 'participants/' + referrerUid), { 
-                points: (contestantSnap.val().points || 0) + 1 
-            });
-
+            await update(contestantRef, { points: (contestantSnap.val().points || 0) + 1 });
             await set(ref(db, 'usedHandles/' + voterId), { 
                 votedFor: referrerUid, 
-                proof: base64Image,
+                proof: reader.result, 
                 time: new Date().toLocaleString() 
             });
-
-            alert("Vote successful!");
+            alert("Point awarded!");
             location.reload();
         };
     } catch (err) {
         alert(err.message);
         btn.disabled = false;
-        status.innerText = "";
+        btn.innerText = "Submit My Vote";
     }
   });
 
@@ -265,17 +197,17 @@
                     <b>Voter:</b> @${id} <br>
                     <b>Supporting:</b> ${vote.votedFor} <br>
                     <img src="${vote.proof}" style="max-width:150px; border:2px solid #6c3483; margin-top:5px; border-radius:5px; cursor:pointer;" 
-                         onclick="window.open(this.src)">
-                    <br><small>Click image to open full size</small>
+                         onclick="this.style.maxWidth = this.style.maxWidth === '150px' ? '100%' : '150px'">
+                    <br><small>Tap image to zoom in/out</small>
                 </li>`;
         }
     } else alert("Wrong Password!");
   };
 
   window.downloadCSV = () => {
-    let csvContent = "data:text/csv;charset=utf-8,Voter Handle,Voted For,Time\n";
-    for (let friend in allVotesData) {
-        csvContent += `${friend},${allVotesData[friend].votedFor},${allVotesData[friend].time}\n`;
+    let csvContent = "data:text/csv;charset=utf-8,Voter,Voted For,Time\n";
+    for (let id in allVotesData) {
+        csvContent += `${id},${allVotesData[id].votedFor},${allVotesData[id].time}\n`;
     }
     const link = document.createElement("a");
     link.setAttribute("href", encodeURI(csvContent));
@@ -286,13 +218,10 @@
 
   document.getElementById('shareBtn').onclick = () => {
     const link = window.location.origin + window.location.pathname + "?ref=" + sessionStorage.getItem("fow_user");
-    navigator.clipboard.writeText(link).then(() => alert("Copied!"));
+    navigator.clipboard.writeText(link).then(() => alert("Referral Link Copied!"));
   };
 
-  window.logout = () => {
-    sessionStorage.removeItem("fow_user");
-    window.location.href = window.location.origin + window.location.pathname;
-  };
+  window.logout = () => { sessionStorage.removeItem("fow_user"); window.location.href = window.location.origin + window.location.pathname; };
 </script>
 </body>
 </html>
