@@ -3,11 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FUMMSA Faces of the Month</title>
+<title>FUMMSA Face of the Week</title>
 <style>
   body { 
     font-family: 'Segoe UI', sans-serif; 
-    /* Purple and White Animated Gradient */
     background: linear-gradient(-45deg, #4b0082, #ffffff, #8e44ad, #ffffff);
     background-size: 400% 400%;
     animation: gradientBG 15s ease infinite;
@@ -38,11 +37,10 @@
 
   .container { max-width: 500px; margin: auto; position: relative; z-index: 1; }
   
-  /* Style for the new second logo */
   .top-logo {
     display: block;
     margin: 0 auto 10px auto;
-    max-width: 120px; /* Adjust size as needed */
+    max-width: 120px; 
     height: auto;
   }
 
@@ -68,8 +66,6 @@
 
   .hidden { display: none; }
   .pts { float: right; font-weight: bold; color: #8e44ad; }
-  
-  /* CHANGED: Title color set to White */
   h1 { text-align: center; color: #ffffff; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
 </style>
 </head>
@@ -102,11 +98,12 @@
            <hr>
         </div>
         <div id="votingInputs">
-          <p id="refInstructions">Enter handles and upload proof to support:</p>
-          <input type="text" id="friendHandle" placeholder="YOUR TikTok Username" required>
-          <input type="text" id="friendIG" placeholder="YOUR Instagram Username" required>
-          <input type="file" id="screenshot" required>
-          <button type="submit">Submit My Vote</button>
+          <p id="refInstructions">Enter your handle and upload proof:</p>
+          <input type="text" id="friendHandle" placeholder="TikTok Username (Optional)">
+          <input type="text" id="friendIG" placeholder="Instagram Username (Optional)">
+          <input type="file" id="screenshot" accept="image/*" required>
+          <div id="uploadStatus" style="font-size: 0.8em; color: #8e44ad; text-align: center; margin: 5px 0;"></div>
+          <button type="submit" id="voteSubmitBtn">Submit My Vote</button>
         </div>
         <button type="button" onclick="logout()" style="background:#95a5a6; margin-top:5px;">Logout / Back to Home</button>
       </form>
@@ -121,7 +118,7 @@
       <h3>🔍 Admin: Vote Verification</h3>
       <button onclick="viewVotes()" style="background:#2c3e50;">View Voter List</button>
       <button id="csvBtn" class="hidden" onclick="downloadCSV()" style="background:#27ae60; margin-top:10px;">Download Excel (CSV) 📊</button>
-      <ul id="adminVoteList" style="font-size: 0.8em; text-align: left; margin-top: 10px; padding-left: 20px;"></ul>
+      <ul id="adminVoteList" style="font-size: 0.8em; text-align: left; margin-top: 10px; padding-left: 0;"></ul>
     </div>
 </div>
 
@@ -208,19 +205,51 @@
 
   document.getElementById('referralForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const friend = clean(document.getElementById('friendHandle').value);
+    const tk = document.getElementById('friendHandle').value.trim();
+    const ig = document.getElementById('friendIG').value.trim();
+    const file = document.getElementById('screenshot').files[0];
+    const btn = document.getElementById('voteSubmitBtn');
+    const status = document.getElementById('uploadStatus');
+
+    if (!tk && !ig) return alert("Enter at least one handle!");
+    if (!file) return alert("Upload proof!");
     if (!referrerUid || referrerUid === sessionStorage.getItem("fow_user")) return alert("Self-voting disabled!");
 
-    const usedSnap = await get(ref(db, 'usedHandles/' + friend));
-    if (usedSnap.exists()) return alert("Already voted!");
+    const voterId = clean(tk || ig);
 
-    const contestantSnap = await get(ref(db, 'participants/' + referrerUid));
-    if (!contestantSnap.exists()) return alert("Contestant not found.");
+    try {
+        btn.disabled = true;
+        status.innerText = "Processing vote...";
 
-    await update(ref(db, 'participants/' + referrerUid), { points: (contestantSnap.val().points || 0) + 1 });
-    await set(ref(db, 'usedHandles/' + friend), { votedFor: referrerUid, time: new Date().toLocaleString() });
-    alert("Point awarded!");
-    e.target.reset();
+        const usedSnap = await get(ref(db, 'usedHandles/' + voterId));
+        if (usedSnap.exists()) throw new Error("This handle already voted!");
+
+        const contestantSnap = await get(ref(db, 'participants/' + referrerUid));
+        if (!contestantSnap.exists()) throw new Error("Contestant not found.");
+
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = async () => {
+            const base64Image = reader.result;
+
+            await update(ref(db, 'participants/' + referrerUid), { 
+                points: (contestantSnap.val().points || 0) + 1 
+            });
+
+            await set(ref(db, 'usedHandles/' + voterId), { 
+                votedFor: referrerUid, 
+                proof: base64Image,
+                time: new Date().toLocaleString() 
+            });
+
+            alert("Vote successful!");
+            location.reload();
+        };
+    } catch (err) {
+        alert(err.message);
+        btn.disabled = false;
+        status.innerText = "";
+    }
   });
 
   window.viewVotes = () => {
@@ -229,8 +258,16 @@
         const list = document.getElementById('adminVoteList');
         list.innerHTML = "";
         document.getElementById('csvBtn').classList.remove('hidden');
-        for (let friend in allVotesData) {
-            list.innerHTML += `<li><b>@${friend}</b> voted for <b>${allVotesData[friend].votedFor}</b></li>`;
+        for (let id in allVotesData) {
+            const vote = allVotesData[id];
+            list.innerHTML += `
+                <li style="margin-bottom:15px; border-bottom:1px solid #ddd; padding-bottom:10px; list-style:none;">
+                    <b>Voter:</b> @${id} <br>
+                    <b>Supporting:</b> ${vote.votedFor} <br>
+                    <img src="${vote.proof}" style="max-width:150px; border:2px solid #6c3483; margin-top:5px; border-radius:5px; cursor:pointer;" 
+                         onclick="window.open(this.src)">
+                    <br><small>Click image to open full size</small>
+                </li>`;
         }
     } else alert("Wrong Password!");
   };
@@ -242,7 +279,7 @@
     }
     const link = document.createElement("a");
     link.setAttribute("href", encodeURI(csvContent));
-    link.setAttribute("download", "FUMMSA_Final_Votes.csv");
+    link.setAttribute("download", "FUMMSA_Votes.csv");
     document.body.appendChild(link);
     link.click();
   };
